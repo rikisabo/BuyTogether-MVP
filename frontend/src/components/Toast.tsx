@@ -54,7 +54,7 @@ export const Toast: React.FC = () => {
   }[toast.type];
 
   return (
-    <div className={`fixed bottom-4 right-4 ${bgColor} text-white px-6 py-3 rounded shadow-lg`}>
+    <div className={`fixed bottom-4 left-4 ${bgColor} text-white px-6 py-3 rounded shadow-lg z-50`}>
       {toast.message}
     </div>
   );

@@ -4,6 +4,7 @@ from enum import Enum
 import uuid
 
 from sqlalchemy import String, Integer, DateTime, Enum as SQLEnum, Index, ForeignKey, UniqueConstraint
+import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -31,7 +32,20 @@ class Participant(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(255), nullable=False)
     qty: Mapped[int] = mapped_column(Integer, nullable=False)
+    # new address/contact columns
+    city: Mapped[str] = mapped_column(String(255), nullable=True)
+    street: Mapped[str] = mapped_column(String(255), nullable=True)
+    house_number: Mapped[str] = mapped_column(String(50), nullable=True)
+    apartment: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    notes: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
     tracking_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # confirmation tracking
+    is_confirmed: Mapped[bool] = mapped_column(sa.Boolean(), nullable=False, default=False)
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    confirmation_token: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
+    last_email_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reminder_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     state: Mapped[ParticipantState] = mapped_column(
         SQLEnum(ParticipantState), nullable=False, default=ParticipantState.JOINED
     )

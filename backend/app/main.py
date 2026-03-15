@@ -5,6 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from .settings import settings
 from .utils.logging import setup_logging, RequestIDMiddleware
 from .api.routers import health, root
+
+# new imports for v1 endpoints and errors
+from .core import errors
+from .api.v1 import deals as deals_router, admin as admin_router, jobs as jobs_router
 from .db import engine
 import logging
 from sqlalchemy import text
@@ -15,9 +19,10 @@ def create_app() -> FastAPI:
     app = FastAPI(title="buyToghether API")
 
     # CORS
+    allow_origins = [settings.CORS_ORIGINS] if isinstance(settings.CORS_ORIGINS, str) else list(settings.CORS_ORIGINS)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
+        allow_origins=allow_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -29,8 +34,18 @@ def create_app() -> FastAPI:
     # include routers under /api/v1
     app.include_router(root.router, prefix="/api/v1")
     app.include_router(health.router, prefix="/api/v1")
+    # newly added domains
+    app.include_router(deals_router.router, prefix="/api/v1")
+    app.include_router(admin_router.router, prefix="/api/v1/admin")
+    app.include_router(jobs_router.router, prefix="/api/v1/jobs")
 
     # exception handlers
+    # ApiError -> structured envelope
+    app.add_exception_handler(errors.ApiError, errors.api_error_handler)
+    # validation errors -> VALIDATION_ERROR envelope
+    from fastapi.exceptions import RequestValidationError
+    app.add_exception_handler(RequestValidationError, errors.validation_exception_handler)
+
     @app.exception_handler(Exception)
     async def generic_exception_handler(request: Request, exc: Exception):
         request_id = getattr(request.state, "request_id", None)
